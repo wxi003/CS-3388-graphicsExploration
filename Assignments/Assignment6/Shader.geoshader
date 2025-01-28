@@ -1,0 +1,97 @@
+#version 400
+
+// Input from tessellation evaluation shader
+layout(triangles) in;
+in vec3 EyeDirection_cameraspace[];
+in vec3 LightDirection_cameraspace[];
+in vec2 uv[];
+
+// Output to fragment shader
+layout(triangle_strip, max_vertices = 3) out;
+out vec3 gs_Normal_cameraspace;
+out vec3 gs_EyeDirection_cameraspace;
+out vec3 gs_LightDirection_cameraspace;
+out vec2 gs_uv;
+
+uniform mat4 MVP;
+uniform mat4 V;
+uniform mat4 M;
+uniform float time;
+uniform sampler2D heightTex;
+uniform float displacementHeight;
+uniform float displacementCloseness;
+
+// Add uniform variables for boat texture and transformation
+uniform sampler2D BoatTexture;
+//uniform mat4 BoatTransform;
+
+// Add uniform variables for eyes texture and transformation
+uniform sampler2D EyesTexture;
+//uniform mat4 EyesTransform;
+
+// Add uniform variables for head texture and transformation
+uniform sampler2D HeadTexture;
+//uniform mat4 HeadTransform;
+
+vec3 GetNormal(vec4 p1, vec4 p2, vec4 p3) {
+    vec3 a = p1.xyz - p2.xyz;
+    vec3 b = p3.xyz - p2.xyz;
+    return normalize(cross(a, b));
+}
+
+vec3 Gerstner(vec3 worldpos, float w, float A, float phi, float Q, vec2 D, int N) {
+    float wxzDot = dot(w * vec2(worldpos.x, worldpos.z), D);
+    float cosTerm = cos(wxzDot + phi * time);
+    float sinTerm = sin(wxzDot + phi * time);
+
+    vec3 displacement;
+    displacement.x = Q * A * D.x * cosTerm;
+    displacement.y = A * sinTerm;
+    displacement.z = Q * A * D.y * cosTerm;
+
+    return displacement;
+}
+
+
+void main() {
+
+    // Store vertex positions
+    vec4 pos_tes;
+    vec4 pos[3];
+
+    // Displace the vertices
+	for(int i = 0; i < gl_in.length(); ++i) {
+        
+        pos_tes = gl_in[i].gl_Position;
+        pos[i] = pos_tes;
+        
+        // Add displacement map height
+        pos[i].y += texture(heightTex, uv[i] * displacementCloseness).r * displacementHeight;
+
+        pos[i].xyz += Gerstner(pos_tes.xyz, 4, 0.08, 1.1, 0.75, vec2(0.3, 0.6), 4);
+        pos[i].xyz += Gerstner(pos_tes.xyz, 2, 0.05, 1.1, 0.75, vec2(0.2, 0.866), 4);
+        pos[i].xyz += Gerstner(pos_tes.xyz, 0.6, 0.2, 0.4, 0.1, vec2(0.3, 0.7), 4);
+        pos[i].xyz += Gerstner(pos_tes.xyz, 0.9, 0.15, 0.4, 0.1, vec2(0.8, 0.1), 4);
+
+	}
+    
+    // Calculate their new normals
+	vec3 normal = GetNormal(pos[0], pos[1], pos[2]);
+
+    // Emit everything
+	for(int i = 0; i < gl_in.length(); ++i) {
+		
+        gl_Position = MVP * pos[i];
+
+        gs_Normal_cameraspace = (V * M * vec4(normal, 0)).xyz;
+
+        gs_EyeDirection_cameraspace = EyeDirection_cameraspace[i];
+        gs_LightDirection_cameraspace = LightDirection_cameraspace[i];
+        gs_uv = uv[i];
+
+		EmitVertex();
+	}
+	EndPrimitive();
+
+
+}

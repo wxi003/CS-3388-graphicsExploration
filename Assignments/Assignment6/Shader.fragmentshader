@@ -1,0 +1,30 @@
+#version 400
+
+// Interpolated values from the geometry shader
+in vec3 gs_Normal_cameraspace;
+in vec3 gs_EyeDirection_cameraspace;
+in vec3 gs_LightDirection_cameraspace;
+in vec2 gs_uv;
+
+// Output data
+out vec4 color;
+
+uniform float alpha;
+uniform sampler2D tex;
+
+void main() {
+    // Material properties
+    vec4 diffuse = texture(tex, gs_uv);
+    vec4 ambient = vec4(0.2, 0.2, 0.2, 1.0);
+    vec4 specular = vec4(0.7, 0.7, 0.7, 1.0);
+
+    vec3 n = normalize(gs_Normal_cameraspace);
+    vec3 l = normalize(gs_LightDirection_cameraspace);
+    float cosTheta = clamp(dot(n, l), 0, 1); //ensure dot product is between 0 and 1
+
+    vec3 E = normalize(gs_EyeDirection_cameraspace);
+    vec3 R = reflect(-l, n);
+    float cosAlpha = clamp(dot(E, R), 0, 1);
+
+    color = ambient + diffuse * cosTheta + specular * pow(cosAlpha, alpha);
+}

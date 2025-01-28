@@ -1,0 +1,36 @@
+#version 400
+
+layout(quads, equal_spacing) in;
+
+in vec3 tcs_EyeDirection_cameraspace[];
+in vec3 tcs_LightDirection_cameraspace[];
+in vec2 tcs_uv[];
+
+out vec3 EyeDirection_cameraspace;
+out vec3 LightDirection_cameraspace;
+out vec2 uv;
+
+void main() {
+    
+    vec4 p0 = gl_in[0].gl_Position;
+    vec4 p1 = gl_in[1].gl_Position;
+    vec4 p2 = gl_in[2].gl_Position;
+    vec4 p3 = gl_in[3].gl_Position;
+
+    vec4 m1 = mix(p0, p1, gl_TessCoord.x);
+    vec4 m2 = mix(p3, p2, gl_TessCoord.x);
+    gl_Position = mix(m1, m2, gl_TessCoord.y);
+
+    vec3 c1 = mix(tcs_EyeDirection_cameraspace[0], tcs_EyeDirection_cameraspace[1], gl_TessCoord.x);
+    vec3 c2 = mix(tcs_EyeDirection_cameraspace[3], tcs_EyeDirection_cameraspace[2], gl_TessCoord.x);
+    EyeDirection_cameraspace = mix(c1, c2, gl_TessCoord.y);
+
+    c1 = mix(tcs_LightDirection_cameraspace[0], tcs_LightDirection_cameraspace[1], gl_TessCoord.x);
+    c2 = mix(tcs_LightDirection_cameraspace[3], tcs_LightDirection_cameraspace[2], gl_TessCoord.x);
+    LightDirection_cameraspace = mix(c1, c2, gl_TessCoord.y);
+
+    vec2 u1 = mix(tcs_uv[0], tcs_uv[1], gl_TessCoord.x);
+    vec2 u2 = mix(tcs_uv[3], tcs_uv[2], gl_TessCoord.x);
+    uv = mix(u1, u2, gl_TessCoord.y);
+
+}

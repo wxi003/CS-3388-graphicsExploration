@@ -1,0 +1,32 @@
+
+#version 400
+
+
+layout(vertices = 4) out;
+
+in vec3 EyeDirection_cameraspace[];
+in vec3 LightDirection_cameraspace[];
+in vec2 uv[];
+
+out vec3 tcs_EyeDirection_cameraspace[];
+out vec3 tcs_LightDirection_cameraspace[];
+out vec2 tcs_uv[];
+
+uniform float outerTess;
+uniform float innerTess;
+
+void main() {
+    tcs_EyeDirection_cameraspace[gl_InvocationID] = EyeDirection_cameraspace[gl_InvocationID];
+    tcs_LightDirection_cameraspace[gl_InvocationID] = LightDirection_cameraspace[gl_InvocationID];
+    tcs_uv[gl_InvocationID] = uv[gl_InvocationID];
+
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+
+    gl_TessLevelOuter[0] = outerTess;
+    gl_TessLevelOuter[1] = outerTess;
+    gl_TessLevelOuter[2] = outerTess;
+    gl_TessLevelOuter[3] = outerTess;
+    gl_TessLevelInner[0] = innerTess;
+    gl_TessLevelInner[1] = innerTess;
+    
+}
