@@ -1,0 +1,35 @@
+#version 400
+
+// Input vertex data, different for all executions of this shader.
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+
+// Output data: will be interpolated for each fragment.
+out vec3 fragNormal;
+out vec3 fragEyeDir;
+out vec3 fragLightDir;
+
+// Values that stay constant for the whole mesh.
+uniform mat4 MVP; // The MVP matrix
+uniform mat4 View; // The View matrix
+uniform mat4 Model; // The Model matrix
+uniform vec3 lightPos; // The position of the light source in world coordinates
+
+void main()
+{
+    vec4 fragPosition = Model * vec4(position, 1.0);
+    fragNormal = mat3(transpose(inverse(Model))) * normal;
+    // Extract the eye position from the View matrix
+    vec3 eyePosition = inverse(View)[3].xyz; 
+    fragEyeDir = eyePosition - fragPosition.xyz;
+    fragLightDir = lightPos - fragPosition.xyz;
+    gl_Position = MVP * vec4(position, 1.0);
+}
+
+
+
+
+
+
+
+
